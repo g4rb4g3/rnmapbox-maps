@@ -1,6 +1,9 @@
 package com.rnmapbox.rnmbx.components.images
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.view.View
 import com.facebook.react.bridge.*
 import com.facebook.react.common.MapBuilder
@@ -133,12 +136,33 @@ class RNMBXImagesManager(private val mContext: ReactApplicationContext) :
         images.setHasOnImageMissing(value.asBoolean())
     }
 
+    private fun convertDrawableToBitmap(sourceDrawable: Drawable?): BitmapDrawable? {
+        if (sourceDrawable == null) {
+            return null
+        }
+        return if (sourceDrawable is BitmapDrawable) {
+            sourceDrawable
+        } else {
+            // copying drawable object to not manipulate on the same reference
+            val constantState = sourceDrawable.constantState ?: return null
+            val drawable = constantState.newDrawable().mutate()
+            val bitmap: Bitmap = Bitmap.createBitmap(
+                drawable.intrinsicWidth, drawable.intrinsicHeight,
+                Bitmap.Config.ARGB_8888
+            )
+            val canvas = Canvas(bitmap)
+            drawable.setBounds(0, 0, canvas.width, canvas.height)
+            drawable.draw(canvas)
+            BitmapDrawable(mContext.resources, bitmap)
+        }
+    }
+
     fun toNativeImage(dynamic: Dynamic): NativeImage? {
         when (dynamic.type) {
             ReadableType.String -> {
                 val resourceName = dynamic.asString();
                 val drawable =
-                    ResourceUtils.getDrawableByName(mContext, resourceName) as BitmapDrawable?
+                    convertDrawableToBitmap(ResourceUtils.getDrawableByName(mContext, resourceName))
                 if (drawable != null) {
                     return NativeImage(ImageInfo(name=resourceName), drawable)
                 } else {
