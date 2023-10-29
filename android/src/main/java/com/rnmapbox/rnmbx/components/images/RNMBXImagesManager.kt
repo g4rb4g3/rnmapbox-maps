@@ -174,7 +174,7 @@ class RNMBXImagesManager(private val mContext: ReactApplicationContext) :
                 val map = dynamic.asMap()
                 val resourceName = map.getString("name")
                 val drawable =
-                    ResourceUtils.getDrawableByName(mContext, resourceName) as BitmapDrawable?
+                    convertDrawableToBitmap(ResourceUtils.getDrawableByName(mContext, resourceName))
                 if (drawable != null && resourceName != null) {
                     return NativeImage(imageInfo(resourceName, map), drawable)
                 } else {
